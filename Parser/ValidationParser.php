@@ -71,20 +71,31 @@ class ValidationParser implements ParserInterface, PostParserInterface
 
         $parsed = $this->doParse($className, array());
 
-        if (isset($input['name']) && !empty($input['name'])) {
-            $output = array();
-            $output[$input['name']] = array(
-                'dataType' => 'object',
-                'actualType' => 'object',
-                'class' => $className,
-                'subType' => null,
-                'required' => null,
-                'description' => null,
-                'readonly' => null,
-                'children' => $parsed
-            );
+        if (isset($input['name'])) {
+          $name = $input['name'];
+          $type = $className;
 
-            return $output;
+          $subType = is_object($type) ? get_class($type) : $type;
+
+          if (class_exists($subType)) {
+              $parts = explode('\\', $subType);
+              $dataType = sprintf('object (%s)', end($parts));
+          } else {
+              $dataType = sprintf('object (%s)', $subType);
+          }
+
+          return array(
+              $name => array(
+                  'required'    => true,
+                  'readonly'    => false,
+                  'description' => '',
+                  'default'     => null,
+                  'dataType'    => $dataType,
+                  'actualType'  => DataTypes::MODEL,
+                  'subType'     => $subType,
+                  'children'    => $parsed,
+              ),
+          );
         }
 
         return $parsed;
